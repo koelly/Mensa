@@ -47,7 +47,6 @@ public class mensa2 extends ListActivity  implements OnClickListener
     private final String db_name = "db_meals";
     private final String t_landshut = "t_landshut";
     ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
-    //ArrayList<String> mStrings = new ArrayList<String>();
     SQLiteDatabase myDB = null;
     
     //CSV URLS
