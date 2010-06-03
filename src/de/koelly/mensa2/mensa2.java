@@ -38,7 +38,6 @@ import android.content.SharedPreferences;
 
 public class mensa2 extends ListActivity  implements OnClickListener
 {
-	
 	//Globale Variablen
 	boolean firstRun;
 	String [][] values = new String [200][10];
