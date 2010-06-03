@@ -1,4 +1,20 @@
 package de.koelly.mensa2;
+/**
+ * Mensa
+ * 
+ * Die Mensa App zeigt den Speiseplan der aktuellen Woche
+ * der HS Landshut an.
+ * Geplant ist die Anzeige aller Mensen des Studentenwerks
+ * Niederbayern/Oberpfalz
+ * 
+ * VORSICHT: Extrem schlechter Code!
+ * Macht Kopfweh! Möglichst erst in ein paar Monaten 
+ * komplett durchlesen!
+ * 
+ * @author      Christopher köllmayr
+ * @version     0.0.11
+ */
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,8 +102,16 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	
 	// Angezeigter Tag
 	String selectedDay = currentDate(0);
+
 	
-	// Quelle: http://www.devx.com/wireless/Article/39810/1954	   	        
+	
+	/**
+	 * Öffnet eine URL und übergibt den Text in einen InputStream
+	 * Quelle: http://www.devx.com/wireless/Article/39810/1954
+	 * 
+	 * @param	urlString	Ort der herunterzuladenden Datei
+	 * @return				InputStream  des Inhalts	
+	 */
 	private InputStream OpenHttpConnection(String urlString) 
 	    throws IOException
 	    {
@@ -118,7 +142,15 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	        }
 	        return in;     
 	    }
+
 	
+	/**
+	 * Lädt den Text in einen String
+	 * Quelle: http://www.devx.com/wireless/Article/39810/1954
+	 * 
+	 * @param	URL		URL der herunterzuladenden Datei
+	 * @return			String des Inhalts	
+	 */	
 	private String DownloadText(String URL) throws UnsupportedEncodingException
     {
         int BUFFER_SIZE = 2000;
@@ -152,7 +184,9 @@ public class mensa2 extends ListActivity  implements OnClickListener
         return str;        
     }
 	
-	// Öffnet oder erstellt die Datenbank
+	/**
+	 * Öffnet oder erstellt die SQlite Datenbank 
+	 */
 	private void OpenOrCreateDB(){
 		try {
 			myDB = this.openOrCreateDatabase(db_name, MODE_PRIVATE, null);			
@@ -161,15 +195,25 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		}
 	}
 
-	// Zu faul für Update, daher wird die komplette alte Table gelöscht
+	/**
+	 * Tabellen der SQlite DB werden
+	 * komplett gelöscht.	
+	 */
 	private void dropTables(){
     	//drop old table
     	myDB.execSQL("DROP TABLE IF EXISTS t_landshut;");
     	Log.d("Mensa: ", "Old table dropped");
 	}
 	
-	// Datum in der Form TT.MM.JJJJ
-	// Mit i können Tage +/- i angezeigt werden
+	/**
+	 * Gibt einen String mit Datum zurück.
+	 * Format des Datums: TT.MM.YYYY
+	 * Mit i kann ein anderes Datum gewählt werden.
+	 * 0 = heute, 1=morgen, usw...
+	 * 
+	 * @param	i	+/- Tage. 0 = heute
+	 * @return		String mit Datum +/- i	
+	 */
 	private String currentDate(int i){
 		//Gibt aktuelles Datum +/- i zurück
 		 SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
@@ -193,7 +237,15 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		 return date;
 }
 	
-	// Gibt Abkürzung des Tagesnamens zurück. Also am Montag ein "Mo"
+	
+	/**
+	 * Gibt String mit Abkürzung des aktuellen 
+	 * Tages zurück.
+	 * Montag --> Mo
+	 * 
+	 * @param	day		Datum im Format dd.mm.yyyy
+	 * @return			String mit Abkürzung des Wochentages	
+	 */
 	private String getDayName(String day){
 		 SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
 		 Calendar c1 = Calendar.getInstance(); 
@@ -210,10 +262,16 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	}
 	
 	
-	// TRUE wenn das aktuelle Datum in der DB gefunden wurde
-	// Aber:
-	//  - Wenn Sa oder So ist wird nicht geupdatet
-	//    Ausnahme hier: Wenn erster Run wird auch am Sa/So geupdatet
+	/**
+	 * Checkt ob das aktuelle Datum in der DB vorhanden ist
+	 * Samstags und Sonntags wird <code>FALSE</code> zurückgegeben.
+	 * Beim ersten Run wird auf jeden Fall <code>TRUE</code>
+	 * zurückgegeben.
+	 *
+     * @return          <code>true</code> wenn das aktuelle Datum
+     * 					in der DB gefunden wurde; 
+     *                  <code>false</code> wenn nicht.	
+	 */
 	private boolean DBup2date(){
 		
 		Log.d("mensa: ", "Checke Aktualitaet der DB...");
@@ -249,8 +307,12 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	}
 	
 
-	//Testerei
-	private void refresh(){
+	/**
+	 * Zentrale Funktion zum Updaten der DB
+	 * Liest den Ort aus den Preferences aus
+	 * und aktualisiert aus entsprechender Datenquelle
+	 * 	
+	 */	private void refresh(){
 		SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
     	String cLocation = settings.getString("location","la");
     	
@@ -269,11 +331,14 @@ public class mensa2 extends ListActivity  implements OnClickListener
 
     	onResume();
 	}
-	
-	// Wenn Table noch nicht existiert wird sie erstellt.
-	// String wird geparst und in DB eingefügt
-	// Leere Einträge des CSV Files fliegen raus
-	// TODO String muss vor dem Einfügen in DB noch escaped werden
+
+	 
+	/**
+	 * Aktualisiert die Datenbank mit entsprechender 
+	 * URL als Datenquelle
+	 * 
+	 * @param	url		String der csv Datei	
+	 */
 	private void updateDBnow(String URL){
     	
         myDB.execSQL("CREATE TABLE IF NOT EXISTS "
@@ -321,11 +386,16 @@ public class mensa2 extends ListActivity  implements OnClickListener
     }
 	
 
-	// Holt die Einträge für das Datum in "selectedDay" aus DB
-	// Schreibt das Ergebnis in ArrayList mStrings
-	// Returns false wenn kein Eintrag gefunden wurde 
-	// Returns true wenn ein Eintrag gefunden wurde
-	private boolean readDB(){ //true wenn es für den Tag was gibt.
+	/**
+	 * Holt die Einträge für das Datum in selectDay
+	 * aus der DB und schreibt das Ergebnis in die
+	 * Arraylist mStrings
+	 * 
+     * @return          <code>true</code> wenn das Datum gefunden
+     * 					wurde und Daten in mStrings abgelegt wurden; 
+     *                  <code>false</code> wenn nicht.
+	 */
+	private boolean readDB(){ 
 		Log.d("Mensa", "ReadDB gestartet");
 		HashMap<String, String> item;
 		list.clear();
@@ -357,62 +427,89 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		return true;
 	}
 
-private boolean nextDay(){
-	Log.d("Mensa: ", "NEXT_DAY pressed");
-	String tmp_selectedDay2 = selectedDay;
-	selectedDay = currentDate(1);
-	
-	int i = 0;
-	while (readDB() == false && i < 5){
+	/**
+	 * Wenn für den nächsten Tag etwas in der DB
+	 * zu finden ist, wird selectedDay auf den
+	 * nächsten Tag gesetzt und die entsprechenden
+	 * Einträge aus der DB geholt.
+	 * Ausserdem wird die Überschrift samt Datum angepasst.
+	 * 
+     * @return          <code>true</code> wenn das Datum gefunden
+     * 					wurde und Daten gelesen und geschrieben wurden 
+     *                  <code>false</code> wenn nicht.
+	 */
+	private boolean nextDay(){
+		Log.d("Mensa: ", "NEXT_DAY pressed");
+		String tmp_selectedDay2 = selectedDay;
 		selectedDay = currentDate(1);
-		i++;
-	}
-	
-	if (i == 5){
-		selectedDay = tmp_selectedDay2;
+		
+		int i = 0;
+		while (readDB() == false && i < 5){
+			selectedDay = currentDate(1);
+			i++;
+		}
+		
+		if (i == 5){
+			selectedDay = tmp_selectedDay2;
+			readDB();
+		}
+		
+		TextView tv2 = (TextView)this.findViewById(R.id.tv1);
+		tv2.setText(cLocation + ": " + getDayName(selectedDay) + " " +  selectedDay);
+		
 		readDB();
+		
+		drawList();
+		
+		return true;
 	}
+
 	
-	TextView tv2 = (TextView)this.findViewById(R.id.tv1);
-	tv2.setText(cLocation + ": " + getDayName(selectedDay) + " " +  selectedDay);
-	
-	readDB();
-	
-	drawList();
-	
-	return true;
-}
-	
-private boolean prevDay(){
-	Log.d("Mensa: ", "PREV_DAY pressed");
-	
-	String tmp_selectedDay = selectedDay;
-	selectedDay = currentDate(-1);
-	
-	int i = 0;
-	while (readDB() == false && i < 5){
+	/**
+	 * Wenn für den vorherigen Tag etwas in der DB
+	 * zu finden ist, wird selectedDay auf den
+	 * vorherigen Tag gesetzt und die entsprechenden
+	 * Einträge aus der DB geholt.
+	 * Ausserdem wird die Überschrift samt Datum angepasst.
+	 * 
+     * @return          <code>true</code> wenn das Datum gefunden
+     * 					wurde und Daten gelesen und geschrieben wurden 
+     *                  <code>false</code> wenn nicht.
+	 */
+	private boolean prevDay(){
+		Log.d("Mensa: ", "PREV_DAY pressed");
+		
+		String tmp_selectedDay = selectedDay;
 		selectedDay = currentDate(-1);
-		i++;
+		
+		int i = 0;
+		while (readDB() == false && i < 5){
+			selectedDay = currentDate(-1);
+			i++;
+		}
+		
+		if (i == 5){
+			selectedDay = tmp_selectedDay;
+			readDB();
+		}
+		
+		drawList();
+	
+		TextView tv1 = (TextView)this.findViewById(R.id.tv1);
+		tv1.setText(cLocation + ": " + getDayName(selectedDay) + " " +  selectedDay);
+		
+		return true;
 	}
-	
-	if (i == 5){
-		selectedDay = tmp_selectedDay;
-		readDB();
+
+
+	/**
+	 * Aktualisiert die ListView im UI mit
+	 * den aktuellen Daten
+	 */
+	private void drawList(){
+	   	SimpleAdapter notes = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
+	   	setListAdapter(notes);
 	}
-	
-	drawList();
-
-	TextView tv1 = (TextView)this.findViewById(R.id.tv1);
-	tv1.setText(cLocation + ": " + getDayName(selectedDay) + " " +  selectedDay);
-	
-	return true;
-}
-
-//Liest mStrings aus und gibt die GUI Liste aus
-    private void drawList(){
-    	SimpleAdapter notes = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
-    	setListAdapter(notes);
-    }
 	
 	/** Called when the activity is first created. */
     @Override
@@ -445,34 +542,6 @@ private boolean prevDay(){
             //lv.setOnClickListener(mensa2.this);
             lv.setOnTouchListener(gestureListener);
 
-        
-        /********************************************
-         * Ablauf:
-         * 1. Checken ob DB da. Wenn nicht, erstellen
-         * 2. Checken ob DB aktuell ist. Wenn ja --> 3
-         * 2.1 DB leeren
-         * 2.2 CSV herunterladen
-         * 2.3 CSV in DB
-         * 3. Anzeigen
-         * 
-         * Hinweis: Ablauf eines Android Programms:
-         * 
-         * 			onCreate
-         * 				|
-         * 				V
-         * 			onStart
-         * 				|
-         * 				V
-         * 			onResume  <-+
-         * 				|		|
-         * 				V		|
-         * 			onPause ----+
-         * 	
-         * Daher kann alles in "onResume" da der
-         * Zustand eh durchlaufen wird.
-         * 
-         * 
-         */
     }
 
 	protected void onResume(){
@@ -496,9 +565,6 @@ private boolean prevDay(){
     		//DB up2date?
     		if (!DBup2date()){
             	Log.d("Mensa: ", "DB nicht aktuell");
-            	//dropTables();
-            	//updateDBnow(urlLaCur);
-            	//updateDBnow(urlLaNex);
             	refresh();
             } else {
             	Log.d("Mensa: ", "DB noch aktuell");
