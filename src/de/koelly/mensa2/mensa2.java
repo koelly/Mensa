@@ -28,7 +28,6 @@ package de.koelly.mensa2;
  * if not, see http://www.gnu.org/licenses/.
  * 
  * Github Link: git@github.com:koelly/Mensa.git
- * Github Link: koelly@github.com:koelly/Mensa.git
  * 
  * @author      Christopher köllmayr
  * @version     0.0.11
@@ -50,6 +49,7 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -74,6 +74,11 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	private static final String TBL_R   = "tbl_r";
 	private static final String TBL_PA  = "tbl_pa";
 	private static final String TBL_DEG = "tbl_deg";
+
+	private static final String LAN  = "la";
+	private static final String REG   = "r";
+	private static final String PAS  = "pa";
+	private static final String DEG = "deg";
 	
     //CSV URLS
 	String urlLaCur  = "http://www.stwno.de/splan/spldw.csv";
@@ -87,6 +92,9 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	
 	// Speicherort der Einstellungen
 	final String PREFERENCES = "mensa.prf";
+	
+	// Diverses...
+	ProgressDialog myProgressDialog = null;
 	
 	public class MyDBHelper {
 		private static final String DB_NAME = "mensa.db";
@@ -368,7 +376,6 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		 * @return			String mit Abkürzung des Wochentages	
 		 * @throws			java.text.ParseException 
 		 */
-		@SuppressWarnings("unused")
 		private String getDayName(String day) throws java.text.ParseException{
 			 SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
 			 Calendar c1 = Calendar.getInstance(); 
@@ -385,45 +392,80 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		}
 	}
 
+			
+
+	
 	/** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+    	SharedPreferences.Editor settingsEditor = settings.edit();
+        boolean firstRun = settings.getBoolean("FirstRun", true);
+        
+        if (firstRun){
+           	myProgressDialog = ProgressDialog.show(this,"Bitte warten", "Daten werden für erstmalige Verwendung geladen...", true);
+    		new Thread() {
+    			public void run() {
+    				try{
+    					mdh.createDB();
+    					mdh.dropTable(TBL_LA);
+    					mdh.createTable(TBL_LA);
+    		        	mdh.dropTable(TBL_PA);
+    		        	mdh.createTable(TBL_PA);
+    		        	mdh.dropTable(TBL_R);
+    		        	mdh.createTable(TBL_R);
+    		        	mdh.dropTable(TBL_DEG);
+    		        	mdh.createTable(TBL_DEG);
+    		        	
+    		        	MyDownloadhelper download = new MyDownloadhelper();
+    		        	download.parse2db(urlLaCur, mdh, TBL_LA);
+    		        	download.parse2db(urlLaNex, mdh, TBL_LA);
+
+    				} catch (Exception e) {	}
+    				// Dismiss the Dialog 
+    				myProgressDialog.dismiss();
+    			}
+    		}.start();
+    		firstRun = false;
+        	settingsEditor.putBoolean("FirstRun", false);
+            
+        }
+        
     }
 
 	protected void onResume(){
     	super.onResume();
     	
-        SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
-        boolean firstRun = settings.getBoolean("FirstRun", true);
-        
-        if (firstRun){
-        	mdh.createDB();
-        	mdh.createTable(TBL_LA);
-        	mdh.createTable(TBL_PA);
-        	mdh.createTable(TBL_R);
-        	mdh.createTable(TBL_DEG);
-        	
-        	SharedPreferences.Editor settingsEditor = settings.edit();
-            settingsEditor.putBoolean("FirstRun", false);
-            settingsEditor.commit();
-        }
-
-        //mdh.createDB();
-        //mdh.createTable(TBL_LA);
-        MyDownloadhelper download = new MyDownloadhelper();
-        download.parse2db(urlLaCur, mdh, TBL_LA);
-        
         MyDateHelper myDate = new MyDateHelper();
-		
-        ArrayList<HashMap<String, String>> list = mdh.getData(TBL_LA, myDate.getToday());
+        String selectedDate = myDate.getToday();
+        
+        // Heute ein Samstag oder Sonntag?
+        try {
+			while (myDate.getDayName(selectedDate).equalsIgnoreCase("Sa") || myDate.getDayName(selectedDate).equalsIgnoreCase("So")){
+				selectedDate = myDate.getCustomDate(selectedDate, 1);
+			}
+		} catch (java.text.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+		while (!mdh.dateInDB(selectedDate, TBL_LA)){
+			selectedDate = myDate.getCustomDate(selectedDate, -1);
+			}
+        
+		ArrayList<HashMap<String, String>> list = mdh.getData(TBL_LA, selectedDate);
         SimpleAdapter UI = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
         setListAdapter(UI);
 	}
 
 
     protected void onPause(){
-    	super.onPause();	
+    	super.onPause();
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+    	SharedPreferences.Editor settingsEditor = settings.edit();
+    	settingsEditor.commit();
     }
     
     protected void onStop(){
