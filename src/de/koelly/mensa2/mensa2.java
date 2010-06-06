@@ -28,6 +28,7 @@ package de.koelly.mensa2;
  * if not, see http://www.gnu.org/licenses/.
  * 
  * Github Link: git@github.com:koelly/Mensa.git
+ * Github Link: koelly@github.com:koelly/Mensa.git
  * 
  * @author      Christopher köllmayr
  * @version     0.0.11
@@ -75,14 +76,14 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	private static final String TBL_DEG = "tbl_deg";
 	
     //CSV URLS
-    String urlLaCur  = "http://www.stwno.de/splan/spldw.csv";
-    String urlLaNex  = "http://www.stwno.de/splan/splnw.csv";
-    String urlPaCur  = "http://www.stwno.de/splan/sppdw.csv";
-    String urlPaNex  = "http://www.stwno.de/splan/sppnw.csv";
-    String urlRCur   = "http://www.stwno.de/splan/sprdw.csv";
-    String urlRNex   = "http://www.stwno.de/splan/sprnw.csv";
-    String urlDegCur = "http://www.stwno.de/splan/spddw.csv";
-    String urlDegNex = "http://www.stwno.de/splan/spddw.csv";
+	String urlLaCur  = "http://www.stwno.de/splan/spldw.csv";
+	String urlLaNex  = "http://www.stwno.de/splan/splnw.csv";
+	String urlPaCur  = "http://www.stwno.de/splan/sppdw.csv";
+	String urlPaNex  = "http://www.stwno.de/splan/sppnw.csv";
+	String urlRCur   = "http://www.stwno.de/splan/sprdw.csv";
+	String urlRNex   = "http://www.stwno.de/splan/sprnw.csv";
+	String urlDegCur = "http://www.stwno.de/splan/spddw.csv";
+	String urlDegNex = "http://www.stwno.de/splan/spddw.csv";
 	
     // Speicherort der Einstellungen
     final String PREFERENCES = "mensa.prf";
