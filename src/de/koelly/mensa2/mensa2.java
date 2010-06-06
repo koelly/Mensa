@@ -85,8 +85,8 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	String urlDegCur = "http://www.stwno.de/splan/spddw.csv";
 	String urlDegNex = "http://www.stwno.de/splan/spddw.csv";
 	
-    // Speicherort der Einstellungen
-    final String PREFERENCES = "mensa.prf";
+	// Speicherort der Einstellungen
+	final String PREFERENCES = "mensa.prf";
 	
 	public class MyDBHelper {
 		private static final String DB_NAME = "mensa.db";
