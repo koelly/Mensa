@@ -11,7 +11,7 @@
 2010-04-25  Christopher Köllmayr  <me@koelly.de> 
  * Version 0.0.9
  * Findet der erste Lauf an einem Sa oder So statt wurde die DB nicht befüllt. 
- 
+
 2010-04-25  Christopher Köllmayr  <me@koelly.de> 
  * Version 0.0.8
  * Wochentag wird in Überschrift angezeigt
