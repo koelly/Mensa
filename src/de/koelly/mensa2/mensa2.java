@@ -47,7 +47,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.StringTokenizer;
-
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
@@ -60,20 +59,22 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 
 
 
 public class mensa2 extends ListActivity  implements OnClickListener
 {
-	// DB Handler
-	MyDBHelper mdh = new MyDBHelper();
-	
+
 	// Tabellen für die verschiedenen Mensen
 	private static final String TBL_LA  = "tbl_la";
 	private static final String TBL_R   = "tbl_r";
 	private static final String TBL_PA  = "tbl_pa";
 	private static final String TBL_DEG = "tbl_deg";
+	
+	private static final String DB_NAME = "mensa.db";
+	SQLiteDatabase DB = null;
 
 	private static final String LAN  = "la";
 	private static final String REG   = "r";
@@ -95,10 +96,10 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	
 	// Diverses...
 	ProgressDialog myProgressDialog = null;
+	boolean firstRun;
 	
-	public class MyDBHelper {
-		private static final String DB_NAME = "mensa.db";
-		SQLiteDatabase DB = null;
+
+
 
 		public void createDB() {
 			try {
@@ -215,9 +216,8 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			DB.close();
 		}
 		
-	}
+
 	
-	public class MyDownloadhelper{
 
 		/**
 		 * Öffnet eine URL und übergibt den Text in einen InputStream
@@ -305,7 +305,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		 * @param	mdh			DB Helper vom Typ MyDBHelper
 		 * @param	tableName	Tabellenname in den gespeichert werden soll	
 		 */
-		public void parse2db(String URL, MyDBHelper mdh, String tableName){
+		public void parse2db(String URL, String tableName){
 			String [][] values = new String [200][10];
 			String str = null;
 			
@@ -329,13 +329,12 @@ public class mensa2 extends ListActivity  implements OnClickListener
 					}if (values[lineNumber][4] == null){
 						lineNumber--;
 					} else {
-						mdh.insert(tableName, values[lineNumber][0], values[lineNumber][2], values[lineNumber][3], values[lineNumber][5], values[lineNumber][6], values[lineNumber][7]);
+						insert(tableName, values[lineNumber][0], values[lineNumber][2], values[lineNumber][3], values[lineNumber][5], values[lineNumber][6], values[lineNumber][7]);
 					}
 				}
 			}
 			
 		}
-	}
 	
 	public class MyDateHelper{
 		public String getCustomDate(String startdate, int i){
@@ -402,35 +401,31 @@ public class mensa2 extends ListActivity  implements OnClickListener
         
         SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
     	SharedPreferences.Editor settingsEditor = settings.edit();
-        boolean firstRun = settings.getBoolean("FirstRun", true);
+        firstRun = settings.getBoolean("FirstRun", true);
         
         if (firstRun){
            	myProgressDialog = ProgressDialog.show(this,"Bitte warten", "Daten werden für erstmalige Verwendung geladen...", true);
-    		new Thread() {
-    			public void run() {
-    				try{
-    					mdh.createDB();
-    					mdh.dropTable(TBL_LA);
-    					mdh.createTable(TBL_LA);
-    		        	mdh.dropTable(TBL_PA);
-    		        	mdh.createTable(TBL_PA);
-    		        	mdh.dropTable(TBL_R);
-    		        	mdh.createTable(TBL_R);
-    		        	mdh.dropTable(TBL_DEG);
-    		        	mdh.createTable(TBL_DEG);
-    		        	
-    		        	MyDownloadhelper download = new MyDownloadhelper();
-    		        	download.parse2db(urlLaCur, mdh, TBL_LA);
-    		        	download.parse2db(urlLaNex, mdh, TBL_LA);
 
-    				} catch (Exception e) {	}
+    					createDB();
+    					dropTable(TBL_LA);
+    					createTable(TBL_LA);
+    		        	dropTable(TBL_PA);
+    		        	createTable(TBL_PA);
+    		        	dropTable(TBL_R);
+    		        	createTable(TBL_R);
+    		        	dropTable(TBL_DEG);
+    		        	createTable(TBL_DEG);
+    		        	
+    		        	parse2db(urlLaCur, TBL_LA);
+    		        	parse2db(urlLaNex, TBL_LA);
+
+
     				// Dismiss the Dialog 
     				myProgressDialog.dismiss();
-    			}
-    		}.start();
-    		firstRun = false;
+
         	settingsEditor.putBoolean("FirstRun", false);
-            
+        	settingsEditor.commit();
+
         }
         
     }
@@ -451,13 +446,21 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			e.printStackTrace();
 		}
         
-		while (!mdh.dateInDB(selectedDate, TBL_LA)){
+		while (!dateInDB(selectedDate, TBL_LA)){
 			selectedDate = myDate.getCustomDate(selectedDate, -1);
 			}
         
-		ArrayList<HashMap<String, String>> list = mdh.getData(TBL_LA, selectedDate);
+		ArrayList<HashMap<String, String>> list = getData(TBL_LA, selectedDate);
         SimpleAdapter UI = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
         setListAdapter(UI);
+        
+        TextView tv1 = (TextView)findViewById(R.id.tv1); 
+        try {
+			tv1.setText(myDate.getDayName(selectedDate) + " " + myDate.getCustomDate(selectedDate, 0));
+		} catch (java.text.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 
