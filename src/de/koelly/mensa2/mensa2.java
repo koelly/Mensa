@@ -56,6 +56,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.ParseException;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.SimpleAdapter;
@@ -75,10 +78,16 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	private static final String DB_NAME = "mensa.db";
 	SQLiteDatabase DB = null;
 
-	private static final String LAN  = "la";
-	private static final String REG   = "r";
-	private static final String PAS  = "pa";
-	private static final String DEG = "deg";
+	// Menüpunkte
+	private final int REFRESH = 0;
+	private final int QUIT = 1;
+	private final int CHANGE_MENSA = 2;
+	private final int NEXT_DAY = 3;
+	private final int PREV_DAY = 4;
+	private final int LA = 5;
+	private final int REG = 6;
+	private final int DEG = 7;
+	private final int PA = 8;
 	
     //CSV URLS
 	String urlLaCur  = "http://www.stwno.de/splan/spldw.csv";
@@ -92,10 +101,15 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	
 	// Speicherort der Einstellungen
 	final String PREFERENCES = "mensa.prf";
+	boolean firstRun; 
+	String location;	// Ort der gewählten Mensa
+    String selectedTable = null;
+    String[] urls = new String[2];
+    String selectedDate;
 	
 	// Diverses...
 	ProgressDialog myProgressDialog = null;
-	boolean firstRun;
+	
 	
 	public void createDB() {
 			try {
@@ -304,6 +318,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	public void parse2db(String URL, String tableName){
 			String [][] values = new String [200][10];
 			String str = null;
+
 			
 			try {
 				str = DownloadText(URL);
@@ -387,9 +402,69 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		}
 	}
 	
-	public void drawUI(String selectedDate, String tableName){
+	    
+	public void setLocaleUI(){
+
+		
+	}
+	
+	public void drawUI(String selectedDate){
+		
+		//TODO Preferences werden nicht sofort geschrieben, sondern noch alte gelesen :-/
 		MyDateHelper myDate = new MyDateHelper();
-		ArrayList<HashMap<String, String>> list = getData(tableName, selectedDate);
+		createDB();
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+        location = settings.getString(location, "la");
+		
+		
+		if (location.equalsIgnoreCase("la")){
+	    	selectedTable = TBL_LA;
+	    	urls[0] = urlLaCur;
+	    	urls[1] = urlLaNex;
+	    	setTitle("Mensa Landshut");
+	    } else if (location.equalsIgnoreCase("r")) {
+	    	selectedTable = TBL_R;
+	    	urls[0] = urlRCur;
+	    	urls[1] = urlRNex;
+	    	setTitle("Mensa Regensburg");
+		} else if (location.equalsIgnoreCase("pa")) {
+	    	selectedTable = TBL_PA;
+	    	urls[0] = urlPaCur;
+	    	urls[1] = urlPaNex;
+	    	setTitle("Mensa Passau");
+		} else if (location.equalsIgnoreCase("deg")) {
+	    	selectedTable = TBL_DEG;
+	    	urls[0] = urlDegCur;
+	    	urls[1] = urlDegNex;
+	    	setTitle("Mensa Deggendorf");
+		}
+        
+        // Heute ein Samstag oder Sonntag?
+
+        try {
+			while (myDate.getDayName(selectedDate).equalsIgnoreCase("Sa") || myDate.getDayName(selectedDate).equalsIgnoreCase("So")){
+				selectedDate = myDate.getCustomDate(selectedDate, 1);
+			}
+		} catch (java.text.ParseException e) {
+			e.printStackTrace();
+		}
+		
+		if (!dateInDB(selectedDate, selectedTable)){
+			dropTable(selectedTable);
+			createTable(selectedTable);
+        	parse2db(urls[0], selectedTable);
+        	parse2db(urls[1], selectedTable);
+			}
+		
+		if (!dateInDB(selectedDate, selectedTable)){
+			//TODO Fehler ausgeben
+			Log.d("Mensa: ,","Datum nicht in der DB zu finden!");
+		}
+		
+		Log.d("Mensa:", "Link zum aktuellen CSV: " + urls[0]);
+		Log.d("Mensa:", "Link zum aktuellen CSV: " + urls[1]);
+		Log.d("Mensa:", "Speiseplan wird gemalt aus " + selectedTable);
+		ArrayList<HashMap<String, String>> list = getData(selectedTable, selectedDate);
         SimpleAdapter UI = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
         setListAdapter(UI);
         
@@ -400,6 +475,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		closeDB();
 	}
 	
 
@@ -433,6 +509,11 @@ public class mensa2 extends ListActivity  implements OnClickListener
         	SharedPreferences.Editor settingsEditor = settings.edit();
         	settingsEditor.putBoolean("FirstRun", false);
             settingsEditor.commit();
+            
+            MyDateHelper myDate = new MyDateHelper();
+            selectedDate = myDate.getToday();
+            
+            closeDB();
         }
         
         
@@ -444,26 +525,12 @@ public class mensa2 extends ListActivity  implements OnClickListener
     	super.onResume();
     	createDB();
     	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
-        firstRun = settings.getBoolean("FirstRun", true);
+        location = settings.getString(location, "la");
+
+
         
-        MyDateHelper myDate = new MyDateHelper();
-        String selectedDate = myDate.getToday();
-        
-        // Heute ein Samstag oder Sonntag?
-        try {
-			while (myDate.getDayName(selectedDate).equalsIgnoreCase("Sa") || myDate.getDayName(selectedDate).equalsIgnoreCase("So")){
-				selectedDate = myDate.getCustomDate(selectedDate, 1);
-			}
-		} catch (java.text.ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-		while (!dateInDB(selectedDate, TBL_LA)){
-			selectedDate = myDate.getCustomDate(selectedDate, -1);
-			}
-		
-		drawUI(selectedDate, TBL_LA);
+		drawUI(selectedDate);
+		closeDB();
 	}
 
 
@@ -479,7 +546,121 @@ public class mensa2 extends ListActivity  implements OnClickListener
     	super.onStop();
     	DB.close();
     }
+    
+    
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+    	
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+    	String location = settings.getString("location","la");
+    	Log.d("Mensa: ", "Menu location: " + location);
 
+    	final boolean result = super.onCreateOptionsMenu(menu);
+    	
+    	menu.clear();
+    	
+        menu.add(2, PREV_DAY, 0, "Tag zurück");
+        menu.add(1, NEXT_DAY, 0, "Tag vor");
+    	menu.add(3, REFRESH, 0, "Refresh");
+    	menu.add(4, QUIT, 0, "Quit");
+
+    	
+    	//SubMenu locMenu = menu.addSubMenu("Mensa");
+    	SubMenu locMenu = menu.addSubMenu(5, CHANGE_MENSA, 0, "Mensa");
+        	if (location.equalsIgnoreCase("la")){ 
+        		locMenu.add(1, LA, 0, "Landshut").setChecked(true);
+        	} else {
+        		locMenu.add(1, LA, 0, "Landshut").setChecked(false);
+        	}
+        	
+        	if (location.equalsIgnoreCase("r")){
+        		locMenu.add(1, REG, 0, "Regensburg").setChecked(true);
+        	} else {
+        		locMenu.add(1, REG, 0, "Regensburg").setChecked(false);
+        	}
+            
+        	if (location.equalsIgnoreCase("deg")){	
+        		locMenu.add(1, DEG, 0, "Deggendorf").setChecked(true);
+            } else {
+            	locMenu.add(1, DEG, 0, "Deggendorf").setChecked(false);
+            }
+        	
+            if (location.equalsIgnoreCase("pa")){
+        		locMenu.add(1, PA, 0, "Passau").setChecked(true);
+            } else {
+            	locMenu.add(1, PA, 0, "Passau").setChecked(false);
+            }
+        	
+        	locMenu.setGroupCheckable(1, true, true);
+        
+        return result;
+    }
+    
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+        SharedPreferences.Editor settingsEditor = settings.edit();
+
+        switch (item.getItemId()) {
+	        case PREV_DAY:
+	        	//prevDay();
+	        	return true;
+	        	
+	        case NEXT_DAY:
+	        	//nextDay();
+	        	return true;
+	        	
+        	case REFRESH:
+	        	Log.d("Mensa: ", "Refresh pressed");
+	        	//refresh();
+	        	return true;
+	        	
+	        case CHANGE_MENSA:
+	        	Log.d("Mensa: ", "Mensa pressed");
+	        	return true;
+	        	
+	        case LA:
+	        	location = "la";
+	        	Log.d("Mensa: ", "LANDSHUT gesetzt");
+	            settingsEditor.putString("location", location);
+	            settingsEditor.commit();
+	            drawUI(selectedDate);
+	            return true;
+	        	
+	        case REG:
+	        	location = "r";
+	        	Log.d("Mensa: ", "REGENSBURG gesetzt");
+	            settingsEditor.putString("location", location);
+	            settingsEditor.commit();
+	            drawUI(selectedDate);
+	        	return true;
+	        	
+	        case DEG:
+	        	location = "deg";
+	        	Log.d("Mensa: ", "DEGGENDORF gesetzt");
+	            settingsEditor.putString("location", location);
+	            settingsEditor.commit();
+	            drawUI(selectedDate);
+	        	return true;
+	            
+	        case PA:
+	        	location = "pa";
+	        	Log.d("Mensa: ", "PASSAU gesetzt");
+	            settingsEditor.putString("location", location);
+	            settingsEditor.commit();
+	            drawUI(selectedDate);
+	        	return true;
+
+	        case QUIT:
+	        	Log.d("Mensa: ", "Quit pressed");
+	        	finish();
+	        	return true;
+
+        }
+        return false;
+    }
+    
 	@Override
 	public void onClick(View v) {
 	}
