@@ -66,7 +66,6 @@ import android.widget.TextView;
 
 public class mensa2 extends ListActivity  implements OnClickListener
 {
-
 	// Tabellen für die verschiedenen Mensen
 	private static final String TBL_LA  = "tbl_la";
 	private static final String TBL_R   = "tbl_r";
@@ -98,10 +97,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	ProgressDialog myProgressDialog = null;
 	boolean firstRun;
 	
-
-
-
-		public void createDB() {
+	public void createDB() {
 			try {
 				DB = openOrCreateDatabase(DB_NAME, MODE_PRIVATE, null);
 			} finally {
@@ -109,7 +105,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			}
 		}
 
-		public void createTable(String tableName){
+	public void createTable(String tableName){
 			DB.execSQL("CREATE TABLE IF NOT EXISTS "
 	                + tableName
 	                + " (id integer AUTO_INCREMENT PRIMARY KEY, date VARCHAR(10), type VARCHAR, name VARCHAR, p_stud VARCHAR, p_clerk VARCHAR, p_guest VARCHAR);"
@@ -117,12 +113,12 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			Log.d("Mensa", "Tabelle " + tableName + " erstellt");
 		}
 		
-		public void dropTable(String tableName){
+	public void dropTable(String tableName){
 	    	DB.execSQL("DROP TABLE IF EXISTS " + tableName + ";");
 	    	Log.d("Mensa", "Tabelle " + tableName + " gelöscht");
 		}
 		
-		public void insert(String tableName, String date, String type, String name, String p_stud, String p_clerk, String p_guest){
+	public void insert(String tableName, String date, String type, String name, String p_stud, String p_clerk, String p_guest){
 			ContentValues werte =  new ContentValues();
 				werte.put("date", date);
 				werte.put("type", type);
@@ -134,7 +130,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 				Log.d("Mensa", "Gericht " + name + " in die Tabelle " + tableName + " eingefuegt");
 		}
 		
-		public boolean dateInDB(String date2search, String tableName){
+	public boolean dateInDB(String date2search, String tableName){
 			Cursor cDateInDB = DB.query(
 				false, 				// distinct?
 				tableName,
@@ -160,7 +156,7 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	        }
 		}
 		
-		public ArrayList<HashMap<String, String>> getData(String tableName, String date){
+	public ArrayList<HashMap<String, String>> getData(String tableName, String date){
 			ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
 			HashMap<String, String> item;
 			list.clear();
@@ -207,26 +203,26 @@ public class mensa2 extends ListActivity  implements OnClickListener
 					} 
 				} 
 			
-			
+			cData.close();
 			return list;
 			
 		}
 		
-		public void closeDB(){
+	public void closeDB(){
 			DB.close();
 		}
 		
 
 	
 
-		/**
-		 * Öffnet eine URL und übergibt den Text in einen InputStream
-		 * Quelle: http://www.devx.com/wireless/Article/39810/1954
-		 * 
-		 * @param	urlString	Ort der herunterzuladenden Datei
-		 * @return				InputStream  des Inhalts	
-		 */
-		private InputStream OpenHttpConnection(String urlString) throws IOException
+	/**
+	 * Öffnet eine URL und übergibt den Text in einen InputStream
+	 * Quelle: http://www.devx.com/wireless/Article/39810/1954
+	 * 
+	 * @param	urlString	Ort der herunterzuladenden Datei
+	 * @return				InputStream  des Inhalts	
+	 */
+	private InputStream OpenHttpConnection(String urlString) throws IOException
 		    {
 				Log.d("Mensa", "Daten von " + urlString + " werden geholt...");
 		        InputStream in = null;
@@ -258,13 +254,13 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		    }
 			
 		/**
-		 * Lädt den Text in einen String
+	 * Lädt den Text in einen String
 		 * Quelle: http://www.devx.com/wireless/Article/39810/1954
 		 * 
 		 * @param	URL		URL der herunterzuladenden Datei
 		 * @return			String des Inhalts	
 		 */	
-		private String DownloadText(String URL) throws UnsupportedEncodingException
+	private String DownloadText(String URL) throws UnsupportedEncodingException
 	    {
 	        int BUFFER_SIZE = 2000;
 	        InputStream in = null;
@@ -298,14 +294,14 @@ public class mensa2 extends ListActivity  implements OnClickListener
 	    }
 
 		/**
-		 * Lädt den Text in in die DB
+	 * Lädt den Text in in die DB
 		 * Quelle: http://www.devx.com/wireless/Article/39810/1954
 		 * 
 		 * @param	URL			URL der herunterzuladenden Datei
 		 * @param	mdh			DB Helper vom Typ MyDBHelper
 		 * @param	tableName	Tabellenname in den gespeichert werden soll	
 		 */
-		public void parse2db(String URL, String tableName){
+	public void parse2db(String URL, String tableName){
 			String [][] values = new String [200][10];
 			String str = null;
 			
@@ -390,49 +386,66 @@ public class mensa2 extends ListActivity  implements OnClickListener
 			 return formatter2.format(c1.getTime()); 
 		}
 	}
-
-			
-
 	
+	public void drawUI(String selectedDate, String tableName){
+		MyDateHelper myDate = new MyDateHelper();
+		ArrayList<HashMap<String, String>> list = getData(tableName, selectedDate);
+        SimpleAdapter UI = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
+        setListAdapter(UI);
+        
+        TextView tv1 = (TextView)findViewById(R.id.tv1); 
+        try {
+			tv1.setText(myDate.getDayName(selectedDate) + " " + myDate.getCustomDate(selectedDate, 0));
+		} catch (java.text.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+
+		
+
 	/** Called when the activity is first created. */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+    	TextView tv1 = (TextView)findViewById(R.id.tv1); 
+        tv1.setText("Daten werden geladen...");
         
-        SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
-    	SharedPreferences.Editor settingsEditor = settings.edit();
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
         firstRun = settings.getBoolean("FirstRun", true);
         
         if (firstRun){
-           	myProgressDialog = ProgressDialog.show(this,"Bitte warten", "Daten werden für erstmalige Verwendung geladen...", true);
+            createDB();
+    		dropTable(TBL_LA);
+    		createTable(TBL_LA);
+        	dropTable(TBL_PA);
+        	createTable(TBL_PA);
+        	dropTable(TBL_R);
+        	createTable(TBL_R);
+        	dropTable(TBL_DEG);
+        	createTable(TBL_DEG);
 
-    					createDB();
-    					dropTable(TBL_LA);
-    					createTable(TBL_LA);
-    		        	dropTable(TBL_PA);
-    		        	createTable(TBL_PA);
-    		        	dropTable(TBL_R);
-    		        	createTable(TBL_R);
-    		        	dropTable(TBL_DEG);
-    		        	createTable(TBL_DEG);
-    		        	
-    		        	parse2db(urlLaCur, TBL_LA);
-    		        	parse2db(urlLaNex, TBL_LA);
-
-
-    				// Dismiss the Dialog 
-    				myProgressDialog.dismiss();
-
+        	parse2db(urlLaCur, TBL_LA);
+        	parse2db(urlLaNex, TBL_LA);
+        
+        	SharedPreferences.Editor settingsEditor = settings.edit();
         	settingsEditor.putBoolean("FirstRun", false);
-        	settingsEditor.commit();
-
+            settingsEditor.commit();
         }
+        
+        
+        
         
     }
 
 	protected void onResume(){
     	super.onResume();
-    	
+    	createDB();
+    	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
+        firstRun = settings.getBoolean("FirstRun", true);
+        
         MyDateHelper myDate = new MyDateHelper();
         String selectedDate = myDate.getToday();
         
@@ -449,18 +462,8 @@ public class mensa2 extends ListActivity  implements OnClickListener
 		while (!dateInDB(selectedDate, TBL_LA)){
 			selectedDate = myDate.getCustomDate(selectedDate, -1);
 			}
-        
-		ArrayList<HashMap<String, String>> list = getData(TBL_LA, selectedDate);
-        SimpleAdapter UI = new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "price" }, new int[] {R.id.name, R.id.price });
-        setListAdapter(UI);
-        
-        TextView tv1 = (TextView)findViewById(R.id.tv1); 
-        try {
-			tv1.setText(myDate.getDayName(selectedDate) + " " + myDate.getCustomDate(selectedDate, 0));
-		} catch (java.text.ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		drawUI(selectedDate, TBL_LA);
 	}
 
 
@@ -469,10 +472,12 @@ public class mensa2 extends ListActivity  implements OnClickListener
     	SharedPreferences settings = getSharedPreferences(PREFERENCES, 0);
     	SharedPreferences.Editor settingsEditor = settings.edit();
     	settingsEditor.commit();
+    	DB.close();
     }
     
     protected void onStop(){
     	super.onStop();
+    	DB.close();
     }
 
 	@Override
