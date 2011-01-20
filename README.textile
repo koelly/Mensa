@@ -1,0 +1,17 @@
+h1. Mensa Landshut
+
+h2. Beschreibung
+
+p. Die Android App "Mensa Landshut" lädt den aktuellen Essensplan der Mensa Landshut von den Seiten des Studentenwerks Niederbayern/Oberpfalz.
+Dies macht sie aber jedes Mal erneut! Es werden keine Daten zwischengespeichert. Dies kann bei häufigerer Benutzung zu einem erhöhten Trafficverbrauch führen!
+
+
+h2. Berechtigungen
+
+p. Die App benötigt 2 Berechtigungen:
+# android.permission.INTERNET um den Speiseplan aus dem Internet zu laden
+# android.permission.ACCESS_NETWORK_STATE um den Status der Datenverbindung zu checken
+
+h3. Lizenz
+
+p. "GPL v.3":http://www.gnu.org/licenses/gpl.html
