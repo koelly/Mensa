@@ -12,6 +12,6 @@ p. Die App benötigt 2 Berechtigungen:
 # android.permission.INTERNET um den Speiseplan aus dem Internet zu laden
 # android.permission.ACCESS_NETWORK_STATE um den Status der Datenverbindung zu checken
 
-h3. Lizenz
+h2. Lizenz
 
 p. "GPL v.3":http://www.gnu.org/licenses/gpl.html
